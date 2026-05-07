@@ -23,7 +23,7 @@ contract AddressDerivedSBTTest is Test {
     function test_Mint_Success() public {
         uint256 tokenId = sbt.mint(alice);
 
-        uint256 expectedTokenId = uint256(uint160(alice));
+        uint256 expectedTokenId = sbt.tokenIdOf(alice);
         assertEq(tokenId, expectedTokenId);
         assertEq(sbt.ownerOf(tokenId), alice);
         assertEq(sbt.balanceOf(alice), 1);
@@ -37,7 +37,7 @@ contract AddressDerivedSBTTest is Test {
     }
 
     function test_Mint_EmitsTransferEvent() public {
-        uint256 expectedTokenId = uint256(uint160(alice));
+        uint256 expectedTokenId = sbt.tokenIdOf(alice);
 
         vm.expectEmit(true, true, true, true);
         emit IERCXXXX.Transfer(address(0), alice, expectedTokenId);
@@ -79,8 +79,9 @@ contract AddressDerivedSBTTest is Test {
     }
 
     function test_Burn_RevertWhen_NotMinted() public {
+        uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
-        sbt.burn(uint256(uint160(bob)));
+        sbt.burn(tid);
     }
 
     function test_Burn_EmitsTransferEvent() public {
@@ -106,12 +107,12 @@ contract AddressDerivedSBTTest is Test {
     // ─── ownerOf ────────────────────────────────────────────────
 
     function test_OwnerOf_ReturnsZeroWhenNotMinted() public view {
-        assertEq(sbt.ownerOf(uint256(uint160(bob))), address(0));
+        assertEq(sbt.ownerOf(sbt.tokenIdOf(bob)), address(0));
     }
 
     function test_OwnerOf_ReturnsOwnerWhenMinted() public {
         sbt.mint(alice);
-        assertEq(sbt.ownerOf(uint256(uint160(alice))), alice);
+        assertEq(sbt.ownerOf(sbt.tokenIdOf(alice)), alice);
     }
 
     function test_OwnerOf_ReturnsZeroAfterBurn() public {
@@ -158,8 +159,9 @@ contract AddressDerivedSBTTest is Test {
     }
 
     function test_TokenURI_RevertWhenNotMinted() public {
+        uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
-        sbt.tokenURI(uint256(uint160(bob)));
+        sbt.tokenURI(tid);
     }
 
     function test_TokenURI_ReturnsBaseURI() public {
@@ -186,6 +188,32 @@ contract AddressDerivedSBTTest is Test {
         vm.prank(bob);
         vm.expectRevert(IERCXXXX.NotAuthorized.selector);
         sbt.burn(tokenId);
+    }
+
+    // ─── tokenIdOf ─────────────────────────────────────────────
+
+    function test_TokenIdOf_ReturnsDeterministicValue() public view {
+        uint256 tid = sbt.tokenIdOf(alice);
+        uint256 expected = uint256(uint160(alice)) ^ uint256(uint160(address(sbt)));
+        assertEq(tid, expected);
+    }
+
+    function test_TokenIdOf_ZeroAddress() public view {
+        uint256 tid = sbt.tokenIdOf(address(0));
+        uint256 expected = 0 ^ uint256(uint160(address(sbt)));
+        assertEq(tid, expected);
+    }
+
+    function test_TokenIdOf_RoundTrip() public {
+        address owner = alice;
+        uint256 tid = sbt.tokenIdOf(owner);
+        assertEq(sbt.ownerOf(tid), address(0));
+        sbt.mint(owner);
+        assertEq(sbt.ownerOf(tid), owner);
+    }
+
+    function test_TokenIdOf_ConsistentAcrossCalls() public view {
+        assertEq(sbt.tokenIdOf(alice), sbt.tokenIdOf(alice));
     }
 
     // ─── Gas ────────────────────────────────────────────────────

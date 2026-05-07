@@ -12,5 +12,6 @@ interface IERCXXXX {
     function burn(uint256 tokenId) external;
 
     function ownerOf(uint256 tokenId) external view returns (address owner);
+    function tokenIdOf(address owner) external view returns (uint256 tokenId);
     function balanceOf(address owner) external view returns (uint256);
 }

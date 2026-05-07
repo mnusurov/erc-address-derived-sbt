@@ -22,7 +22,7 @@ contract AddressDerivedSBT is IERCXXXX, IERC721Metadata {
     }
 
     function mint(address to) external virtual returns (uint256 tokenId) {
-        tokenId = deriveTokenId(to);
+        tokenId = tokenIdOf(to);
 
         require(!_isMinted[tokenId], AlreadyMinted());
 
@@ -43,8 +43,7 @@ contract AddressDerivedSBT is IERCXXXX, IERC721Metadata {
     }
 
     function balanceOf(address owner) external view virtual returns (uint256) {
-        uint256 tokenId = deriveTokenId(owner);
-        return _isMinted[tokenId] ? 1 : 0;
+        return _isMinted[tokenIdOf(owner)] ? 1 : 0;
     }
 
     function name() external view virtual returns (string memory) {
@@ -63,14 +62,13 @@ contract AddressDerivedSBT is IERCXXXX, IERC721Metadata {
     }
 
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
-        // Safe: tokenId derived from address (uint160 range guaranteed)
-        // forge-lint: disable-next-line(unsafe-typecast)
-        return _isMinted[tokenId] ? address(uint160(tokenId)) : address(0);
+        return
+            _isMinted[tokenId]
+                ? address(uint160(tokenId ^ uint256(uint160(address(this))))) // forge-lint: disable-line(unsafe-typecast)
+                : address(0);
     }
 
-    function deriveTokenId(
-        address owner
-    ) internal pure virtual returns (uint256) {
-        return uint256(uint160(owner));
+    function tokenIdOf(address owner) public view virtual returns (uint256) {
+        return uint256(uint160(owner)) ^ uint256(uint160(address(this)));
     }
 }
