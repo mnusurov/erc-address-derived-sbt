@@ -32,9 +32,9 @@ interface IERCXXXX {
     function burn(uint256 tokenId) external;
 
     /// @notice Get the owner of a token by token ID
-    /// @dev Returns address(0) if token not minted (does NOT revert)
+    /// @dev Reverts if token not minted
     /// @param tokenId ID of the token to query
-    /// @return owner The address that owns the token, or address(0) if not minted
+    /// @return owner The address that owns the token
     function ownerOf(uint256 tokenId) external view returns (address owner);
 
     /// @notice Derive the token ID for a given owner address

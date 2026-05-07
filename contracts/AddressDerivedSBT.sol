@@ -29,8 +29,6 @@ contract AddressDerivedSBT is IERCXXXX, IERC721Metadata {
 
     function burn(uint256 tokenId) external virtual {
         address owner = ownerOf(tokenId);
-        require(owner != address(0), NotMinted());
-
         require(msg.sender == owner, NotAuthorized());
 
         _isMinted[tokenId] = false;
@@ -51,14 +49,13 @@ contract AddressDerivedSBT is IERCXXXX, IERC721Metadata {
     }
 
     function tokenURI(uint256 tokenId) external view virtual returns (string memory) {
-        require(ownerOf(tokenId) != address(0), NotMinted());
+        require(_isMinted[tokenId], NotMinted());
         return _baseUri;
     }
 
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
-        return _isMinted[tokenId]
-            ? address(uint160(tokenId ^ uint256(uint160(address(this)))))  // forge-lint: disable-line(unsafe-typecast)
-            : address(0);
+        require(_isMinted[tokenId], NotMinted());
+        return address(uint160(tokenId ^ uint256(uint160(address(this))))); // forge-lint: disable-line(unsafe-typecast)
     }
 
     function tokenIdOf(address owner) public view virtual returns (uint256) {

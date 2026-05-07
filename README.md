@@ -36,7 +36,7 @@ Existing standards (ERC-721 + ERC-5192/5484, ERC-4973, ERC-8129) either:
 
 ## Key Features
 
-- **Deterministic Token ID**: `tokenId = uint256(uint160(owner))`
+- **Deterministic Token ID**: `tokenId = uint256(uint160(owner)) ^ uint256(uint160(address(this)))`
 - **Strict one-per-address** enforced at the token ID level
 - **Simple mapping storage**: existence tracking via a single `mapping(uint256 => bool)`
 - **Gas-efficient** `ownerOf` and `balanceOf`
@@ -58,13 +58,13 @@ AddressDerivedSBT sbt = new AddressDerivedSBT("Name", "SYM", "https://base.uri/"
 sbt.mint(studentAddress);        // tokenId is automatically derived
 
 // Querying
-address owner = sbt.ownerOf(tokenId);     // returns address or address(0)
+address owner = sbt.ownerOf(tokenId);     // reverts if not minted
 uint256 balance = sbt.balanceOf(user);
 
 // Metadata
 string name = sbt.name();
 string symbol = sbt.symbol();
-string uri = sbt.tokenURI(tokenId);       // returns base URI if token exists
+string uri = sbt.tokenURI(tokenId);       // returns base URI if token exists, reverts if not minted
 
 // Burning
 sbt.burn(tokenId);                        // by owner only
@@ -101,10 +101,10 @@ The reference implementation implements both interfaces (`AddressDerivedSBT is I
 
 | Operation | Gas Cost (approx) |
 |-----------|------------------|
-| Mint      | ~34,700          |
-| Burn      | ~28,300          |
-| ownerOf   | ~10,000 (unminted) / ~33,400 (minted) |
-| balanceOf | ~10,000 (unminted) / ~33,300 (minted) |
+| Mint      | 32,092         |
+| Burn      | 26,438         |
+| ownerOf   | revert (unminted) / 34,145 (minted) |
+| balanceOf | 10,005 (unminted) / 33,295 (minted) |
 
 The reference implementation uses a simple `mapping(uint256 => bool)` for existence tracking, keeping the contract minimal, auditable, and gas-efficient for the one-per-address use case. Minting is permissionless — any address can mint a token to any recipient.
 
@@ -146,5 +146,4 @@ test/              # Foundry tests
 ├── AddressDerivedSBT.t.sol
 
 lib/               # Dependencies (forge-std)
-out/               # Compilation artifacts (gitignored)
 ```

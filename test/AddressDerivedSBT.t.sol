@@ -45,9 +45,11 @@ contract AddressDerivedSBTTest is Test {
     }
 
     function test_Mint_AllowsMintToZeroAddress() public {
-        sbt.mint(address(0));
+        uint256 tid = sbt.mint(address(0));
 
-        assertEq(sbt.ownerOf(0), address(0));
+        uint256 expectedTid = sbt.tokenIdOf(address(0));
+        assertEq(tid, expectedTid);
+        assertEq(sbt.ownerOf(tid), address(0));
         assertEq(sbt.balanceOf(address(0)), 1);
     }
 
@@ -62,11 +64,11 @@ contract AddressDerivedSBTTest is Test {
 
     function test_Burn_ByOwner() public {
         uint256 tokenId = sbt.mint(alice);
+        assertEq(sbt.balanceOf(alice), 1);
 
         vm.prank(alice);
         sbt.burn(tokenId);
 
-        assertEq(sbt.ownerOf(tokenId), address(0));
         assertEq(sbt.balanceOf(alice), 0);
     }
 
@@ -106,8 +108,10 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── ownerOf ────────────────────────────────────────────────
 
-    function test_OwnerOf_ReturnsZeroWhenNotMinted() public view {
-        assertEq(sbt.ownerOf(sbt.tokenIdOf(bob)), address(0));
+    function test_OwnerOf_RevertWhenNotMinted() public {
+        uint256 tid = sbt.tokenIdOf(bob);
+        vm.expectRevert(IERCXXXX.NotMinted.selector);
+        sbt.ownerOf(tid);
     }
 
     function test_OwnerOf_ReturnsOwnerWhenMinted() public {
@@ -115,13 +119,14 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.ownerOf(sbt.tokenIdOf(alice)), alice);
     }
 
-    function test_OwnerOf_ReturnsZeroAfterBurn() public {
+    function test_OwnerOf_RevertAfterBurn() public {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
         sbt.burn(tokenId);
 
-        assertEq(sbt.ownerOf(tokenId), address(0));
+        vm.expectRevert(IERCXXXX.NotMinted.selector);
+        sbt.ownerOf(tokenId);
     }
 
     // ─── balanceOf ──────────────────────────────────────────────
@@ -207,8 +212,9 @@ contract AddressDerivedSBTTest is Test {
     function test_TokenIdOf_RoundTrip() public {
         address owner = alice;
         uint256 tid = sbt.tokenIdOf(owner);
-        assertEq(sbt.ownerOf(tid), address(0));
+        assertEq(sbt.balanceOf(owner), 0);
         sbt.mint(owner);
+        assertEq(sbt.balanceOf(owner), 1);
         assertEq(sbt.ownerOf(tid), owner);
     }
 
