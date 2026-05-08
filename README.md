@@ -8,7 +8,7 @@
 
 ## Abstract
 
-This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)** / non-transferable tokens, where the `tokenId` is not a sequential counter, but a **deterministic function of the recipient's address XOR'd with the contract address** — see `tokenIdOf()` in IERCXXXX interface.
+This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)** / non-transferable tokens, where the `tokenId` is deterministically derived from the owner's address — see `tokenIdOf()` in the IERCXXXX interface.
 
 This design enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, simplifies `ownerOf` and `balanceOf`, and makes the semantics of the token extremely clear.
 
