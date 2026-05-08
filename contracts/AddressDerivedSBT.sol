@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity 0.8.35;
 
-import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
 import {IERCXXXX} from "./interfaces/IERCXXXX.sol";
 
-contract AddressDerivedSBT is IERC721Metadata, IERCXXXX {
+contract AddressDerivedSBT is IERCXXXX {
     mapping(uint256 => bool) private _isMinted;
 
     string private _name;

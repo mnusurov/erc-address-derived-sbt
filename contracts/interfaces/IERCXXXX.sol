@@ -4,11 +4,12 @@ pragma solidity 0.8.35;
 import {IERC165} from "./IERC165.sol";
 import {IERC5192} from "./IERC5192.sol";
 import {IERC721Core} from "./IERC721Core.sol";
+import {IERC721Metadata} from "./IERC721Metadata.sol";
 
 /// @title ERC-XXXX Address-Derived Non-Transferable Token
 /// @dev See https://eips.ethereum.org/EIPS/eip-XXXX
 /// @dev Token ID is derived deterministically: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
-interface IERCXXXX is IERC165, IERC5192, IERC721Core {
+interface IERCXXXX is IERC165, IERC5192, IERC721Core, IERC721Metadata {
     /// @dev Thrown when attempting to mint to an address that already holds a token
     error AlreadyMinted();
 

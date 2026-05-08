@@ -49,7 +49,7 @@ Every compliant contract MUST implement the `IERCXXXX` interface:
 The interface identifier for this standard is `0x5fc816fe`, computed as the XOR of selectors for `mint(address)`, `burn(uint256)`, and `tokenIdOf(address)`.
 
 ```solidity
-interface IERCXXXX is IERC165, IERC5192, IERC721Core {
+interface IERCXXXX is IERC165, IERC5192, IERC721Core, IERC721Metadata {
     /// @dev Thrown when attempting to mint to an address that already holds a token
     error AlreadyMinted();
 
@@ -246,10 +246,9 @@ This standard is not an extension of ERC-5192. ERC-5192 is itself an extension o
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.26;
 
-import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
 import {IERCXXXX} from "./interfaces/IERCXXXX.sol";
 
-contract AddressDerivedSBT is IERC721Metadata, IERCXXXX {
+contract AddressDerivedSBT is IERCXXXX {
     mapping(uint256 => bool) private _isMinted;
 
     string private _name;
