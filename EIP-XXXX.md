@@ -43,8 +43,8 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 Compliant contracts MUST implement the following supporting interfaces:
 
 ```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: CC0-1.0
+pragma solidity ^0.8.26;
 
 /// Minimal ERC-721 Core — Transfer event + balanceOf + ownerOf
 interface IERC721Core {
@@ -73,10 +73,10 @@ Every compliant contract MUST implement the `IERCXXXX` interface:
 The interface identifier for this standard is `0x5fc816fe`, computed as the XOR of selectors for `mint(address)`, `burn(uint256)`, and `tokenIdOf(address)`.
 
 ```solidity
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.26;
 
-interface IERCXXXX is IERC721Core, IERC165, IERC5192 {
+interface IERCXXXX is IERC165, IERC5192, IERC721Core {
     error AlreadyMinted();
     error NotMinted();
     error NotAuthorized();
@@ -248,13 +248,13 @@ This standard is not an extension of ERC-5192. ERC-5192 is itself an extension o
 ## Reference Implementation
 
 ```solidity
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.26;
 
-import {IERCXXXX} from "./interfaces/IERCXXXX.sol";
 import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
+import {IERCXXXX} from "./interfaces/IERCXXXX.sol";
 
-contract AddressDerivedSBT is IERCXXXX, IERC721Metadata {
+contract AddressDerivedSBT is IERC721Metadata, IERCXXXX {
     mapping(uint256 => bool) private _isMinted;
 
     string private _name;

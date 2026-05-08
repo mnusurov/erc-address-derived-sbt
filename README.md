@@ -30,7 +30,7 @@ Existing standards (ERC-721 + ERC-5192/5484, ERC-4973, ERC-8129) either:
 - Allow multiple tokens per address,
 - Or require unnecessary complexity.
 
-**Address-Derived design** solves these problems elegantly by making the `tokenId` itself encode the owner's identity (XOR with the contract address for cross-contract isolation).
+**Address-Derived design** solves these problems elegantly by making the `tokenId` itself encode the owner's identity — see `tokenIdOf()` for the derivation formula.
 
 ---
 
@@ -73,21 +73,31 @@ sbt.burn(tokenId);                        // by owner only
 
 ## Interface
 
-### IERCXXXX (Core)
+### IERC721Core (Transfer event + read functions)
 
 ```solidity
-interface IERCXXXX {
+interface IERC721Core {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
-    function mint(address to) external returns (uint256 tokenId);
-    function burn(uint256 tokenId) external;
-    function ownerOf(uint256 tokenId) external view returns (address owner);
-    function tokenIdOf(address owner) external view returns (uint256 tokenId);
     function balanceOf(address owner) external view returns (uint256);
+    function ownerOf(uint256 tokenId) external view returns (address);
 }
 ```
 
-### IERC721Metadata (for metadata)
+### IERCXXXX (Core)
+
+```solidity
+interface IERCXXXX is IERC165, IERC5192, IERC721Core {
+    error AlreadyMinted();
+    error NotMinted();
+    error NotAuthorized();
+
+    function mint(address to) external returns (uint256 tokenId);
+    function burn(uint256 tokenId) external;
+    function tokenIdOf(address owner) external view returns (uint256 tokenId);
+}
+```
+
+### IERC721Metadata (metadata)
 
 ```solidity
 interface IERC721Metadata {
@@ -97,7 +107,7 @@ interface IERC721Metadata {
 }
 ```
 
-The reference implementation implements both interfaces (`AddressDerivedSBT is IERCXXXX, IERC721Metadata`).
+The reference implementation: `AddressDerivedSBT is IERC721Metadata, IERCXXXX`.
 
 ## Gas Efficiency
 
@@ -141,11 +151,14 @@ forge fmt
 contracts/         # Solidity source code
 ├── AddressDerivedSBT.sol    # Reference implementation
 └── interfaces/
-    ├── IERCXXXX.sol         # Core standard interface
-    └── IERC721Metadata.sol  # Metadata interface (ERC-721 compatible)
+    ├── IERC165.sol          # ERC-165
+    ├── IERC5192.sol         # ERC-5192
+    ├── IERC721Core.sol      # Minimal ERC-721 subset
+    ├── IERC721Metadata.sol  # ERC-721 metadata
+    └── IERCXXXX.sol         # Core standard interface
 
 test/              # Foundry tests
-├── AddressDerivedSBT.t.sol
+└── AddressDerivedSBT.t.sol
 
 lib/               # Dependencies (forge-std)
 ```
