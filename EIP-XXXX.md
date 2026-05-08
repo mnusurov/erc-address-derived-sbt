@@ -1,7 +1,7 @@
 ---
 eip: XXXX
 title: Address-Derived Non-Transferable Token
-description: A minimal soulbound token standard where tokenId is deterministically derived from the owner's address.
+description: A minimal soulbound token standard where tokenId is deterministically derived from the owner's address XOR'd with the contract address.
 author: Marat Nusurov (@mnusurov)
 discussions-to: https://ethereum-magicians.org/t/erc-xxxx-address-derived-non-transferable-token
 status: Draft
@@ -168,7 +168,6 @@ interface IERC721Metadata {
 8. **Total Supply (Optional)**:
    - `totalSupply() external view returns (uint256)` — OPTIONAL
    - If implemented, MUST return the number of currently minted (non-burned) tokens
-   - `supportsInterface` MUST return `true` for `IERCXXXX`, `IERC5192`, `IERC721Metadata`, and `IERC165` interface IDs
 
 
 ## Rationale
@@ -346,7 +345,7 @@ For ERC-4337 accounts: if a contract account is destroyed via `selfdestruct` and
 
 ### Minting Access Control
 
-The standard does not enforce access control on `mint()`. The reference implementation exposes `mint()` as `public virtual`, allowing deployers to override it with their own policy (role-based, signature-based, etc.). Deployers SHOULD add access control appropriate to their use case.
+The standard does not enforce access control on `mint()`. The reference implementation exposes `mint()` as `external virtual`, allowing deployers to override it with their own policy (role-based, signature-based, etc.). Deployers SHOULD add access control appropriate to their use case.
 
 **Unsolicited minting**: Because `mint(address to)` may be callable by anyone in a permissive deployment, a party could mint unwanted tokens to arbitrary addresses. While the one-per-address guarantee prevents repeated spam minting, deployers issuing credentials with meaningful semantics (KYC, membership, attestations) MUST restrict access to `mint()`. This concern was also raised in the ERC-8129 community discussion; responsibility is intentionally left to deployers rather than mandated by the standard.
 
