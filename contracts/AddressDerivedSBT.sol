@@ -23,17 +23,15 @@ contract AddressDerivedSBT is IERCXXXX {
     function burn(uint256 tokenId) external virtual {
         address owner = ownerOf(tokenId);
         require(msg.sender == owner, NotAuthorized());
-
         delete _isMinted[tokenId];
-
         emit Transfer(owner, address(0), tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId) external pure virtual returns (bool) {
         return interfaceId == 0x5fc816fe // IERCXXXX
+            || interfaceId == 0x01ffc9a7 // IERC165
             || interfaceId == 0xb45a3c0e // IERC5192
-            || interfaceId == 0x5b5e139f // IERC721Metadata
-            || interfaceId == 0x01ffc9a7; // IERC165
+            || interfaceId == 0x5b5e139f; // IERC721Metadata
     }
 
     function balanceOf(address owner) external view virtual returns (uint256) {
