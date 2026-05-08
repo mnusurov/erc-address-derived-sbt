@@ -107,29 +107,6 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.balanceOf(alice), 1);
     }
 
-    // ─── ownerOf ────────────────────────────────────────────────
-
-    function test_OwnerOf_RevertWhenNotMinted() public {
-        uint256 tid = sbt.tokenIdOf(bob);
-        vm.expectRevert(IERCXXXX.NotMinted.selector);
-        sbt.ownerOf(tid);
-    }
-
-    function test_OwnerOf_ReturnsOwnerWhenMinted() public {
-        sbt.mint(alice);
-        assertEq(sbt.ownerOf(sbt.tokenIdOf(alice)), alice);
-    }
-
-    function test_OwnerOf_RevertAfterBurn() public {
-        uint256 tokenId = sbt.mint(alice);
-
-        vm.prank(alice);
-        sbt.burn(tokenId);
-
-        vm.expectRevert(IERCXXXX.NotMinted.selector);
-        sbt.ownerOf(tokenId);
-    }
-
     // ─── balanceOf ──────────────────────────────────────────────
 
     function test_BalanceOf_ReturnsZeroForUnmintedAddress() public view {
@@ -152,6 +129,62 @@ contract AddressDerivedSBTTest is Test {
         sbt.burn(tokenId);
 
         assertEq(sbt.balanceOf(alice), 0);
+    }
+
+    // ─── locked ─────────────────────────────────────────────────
+
+    function test_Locked_ReturnsTrueWhenMinted() public {
+        uint256 tokenId = sbt.mint(alice);
+        assertEq(sbt.locked(tokenId), true);
+    }
+
+    function test_Locked_RevertsWhenNotMinted() public {
+        uint256 tid = sbt.tokenIdOf(bob);
+        vm.expectRevert(IERCXXXX.NotMinted.selector);
+        sbt.locked(tid);
+    }
+
+    function test_Mint_EmitsLockedEvent() public {
+        uint256 expectedTokenId = sbt.tokenIdOf(alice);
+
+        vm.expectEmit(true, false, false, false);
+        emit IERC5192.Locked(expectedTokenId);
+        sbt.mint(alice);
+    }
+
+    function test_Mint_EmitsLockedEventOnReMint() public {
+        uint256 tokenId = sbt.mint(alice);
+        assertEq(sbt.ownerOf(tokenId), alice);
+        assertEq(sbt.balanceOf(alice), 1);
+
+        vm.prank(alice);
+        sbt.burn(tokenId);
+        assertEq(sbt.balanceOf(alice), 0);
+
+        vm.expectRevert(IERCXXXX.NotMinted.selector);
+        sbt.ownerOf(tokenId);
+
+        uint256 expectedTokenId = sbt.tokenIdOf(alice);
+        vm.expectEmit(true, false, false, false);
+        emit IERC5192.Locked(expectedTokenId);
+        sbt.mint(alice);
+
+        assertEq(sbt.balanceOf(alice), 1);
+        assertEq(sbt.ownerOf(expectedTokenId), alice);
+    }
+
+    function test_Burn_DoesNotEmitUnlocked() public {
+        uint256 tokenId = sbt.mint(alice);
+
+        vm.recordLogs();
+        vm.prank(alice);
+        sbt.burn(tokenId);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes32 unlockedSig = keccak256("Unlocked(uint256)");
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(logs[i].topics[0], unlockedSig);
+        }
     }
 
     // ─── Metadata ───────────────────────────────────────────────
@@ -186,49 +219,6 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.tokenURI(tokenId), BASE_URI);
     }
 
-    // ─── tokenIdOf ─────────────────────────────────────────────
-
-    function test_TokenIdOf_ReturnsDeterministicValue() public view {
-        uint256 tid = sbt.tokenIdOf(alice);
-        uint256 expected = uint256(uint160(alice)) ^ uint256(uint160(address(sbt)));
-        assertEq(tid, expected);
-    }
-
-    function test_TokenIdOf_ZeroAddress() public view {
-        uint256 tid = sbt.tokenIdOf(address(0));
-        uint256 expected = 0 ^ uint256(uint160(address(sbt)));
-        assertEq(tid, expected);
-    }
-
-    function test_TokenIdOf_ConsistentAfterReMint() public {
-        uint256 tokenIdBefore = sbt.tokenIdOf(alice);
-        uint256 tid = sbt.mint(alice);
-        assertEq(tid, tokenIdBefore);
-        
-        vm.prank(alice);
-        sbt.burn(tid);
-        
-        uint256 tokenIdAfter = sbt.tokenIdOf(alice);
-        assertEq(tokenIdAfter, tokenIdBefore);
-        
-        // Re-mint
-        uint256 tid2 = sbt.mint(alice);
-        assertEq(tid2, tokenIdBefore);
-    }
-
-    function test_TokenIdOf_RoundTrip() public {
-        address owner = alice;
-        uint256 tid = sbt.tokenIdOf(owner);
-        assertEq(sbt.balanceOf(owner), 0);
-        sbt.mint(owner);
-        assertEq(sbt.balanceOf(owner), 1);
-        assertEq(sbt.ownerOf(tid), owner);
-    }
-
-    function test_TokenIdOf_ConsistentAcrossCalls() public view {
-        assertEq(sbt.tokenIdOf(alice), sbt.tokenIdOf(alice));
-    }
-
     // ─── supportsInterface ──────────────────────────────────────
 
     function test_SupportsInterface_IERC165() public view {
@@ -255,65 +245,69 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.supportsInterface(0xdeadbeef), false);
     }
 
-    // ─── locked ─────────────────────────────────────────────────
+    // ─── ownerOf ────────────────────────────────────────────────
 
-    function test_Locked_ReturnsTrueWhenMinted() public {
-        uint256 tokenId = sbt.mint(alice);
-        assertEq(sbt.locked(tokenId), true);
-    }
-
-    function test_Locked_RevertsWhenNotMinted() public {
+    function test_OwnerOf_RevertWhenNotMinted() public {
         uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
-        sbt.locked(tid);
+        sbt.ownerOf(tid);
     }
 
-    function test_Mint_EmitsLockedEvent() public {
-        uint256 expectedTokenId = sbt.tokenIdOf(alice);
-
-        vm.expectEmit(true, false, false, false);
-        emit IERC5192.Locked(expectedTokenId);
+    function test_OwnerOf_ReturnsOwnerWhenMinted() public {
         sbt.mint(alice);
+        assertEq(sbt.ownerOf(sbt.tokenIdOf(alice)), alice);
     }
 
-    function test_Mint_EmitsLockedEventOnReMint() public {
-        // First mint
+    function test_OwnerOf_RevertAfterBurn() public {
         uint256 tokenId = sbt.mint(alice);
-        assertEq(sbt.ownerOf(tokenId), alice);
-        assertEq(sbt.balanceOf(alice), 1);
 
-        // Burn
         vm.prank(alice);
         sbt.burn(tokenId);
-        assertEq(sbt.balanceOf(alice), 0);
 
-        // Verify token is not minted
         vm.expectRevert(IERCXXXX.NotMinted.selector);
         sbt.ownerOf(tokenId);
-
-        // Re-mint should emit Locked event
-        uint256 expectedTokenId = sbt.tokenIdOf(alice);
-        vm.expectEmit(true, false, false, false);
-        emit IERC5192.Locked(expectedTokenId);
-        sbt.mint(alice);
-        
-        // Verify re-minted
-        assertEq(sbt.balanceOf(alice), 1);
-        assertEq(sbt.ownerOf(expectedTokenId), alice);
     }
 
-    function test_Burn_DoesNotEmitUnlocked() public {
-        uint256 tokenId = sbt.mint(alice);
+    // ─── tokenIdOf ─────────────────────────────────────────────
 
-        vm.recordLogs();
+    function test_TokenIdOf_ReturnsDeterministicValue() public view {
+        uint256 tid = sbt.tokenIdOf(alice);
+        uint256 expected = uint256(uint160(alice)) ^ uint256(uint160(address(sbt)));
+        assertEq(tid, expected);
+    }
+
+    function test_TokenIdOf_ZeroAddress() public view {
+        uint256 tid = sbt.tokenIdOf(address(0));
+        uint256 expected = 0 ^ uint256(uint160(address(sbt)));
+        assertEq(tid, expected);
+    }
+
+    function test_TokenIdOf_RoundTrip() public {
+        address owner = alice;
+        uint256 tid = sbt.tokenIdOf(owner);
+        assertEq(sbt.balanceOf(owner), 0);
+        sbt.mint(owner);
+        assertEq(sbt.balanceOf(owner), 1);
+        assertEq(sbt.ownerOf(tid), owner);
+    }
+
+    function test_TokenIdOf_ConsistentAcrossCalls() public view {
+        assertEq(sbt.tokenIdOf(alice), sbt.tokenIdOf(alice));
+    }
+
+    function test_TokenIdOf_ConsistentAfterReMint() public {
+        uint256 tokenIdBefore = sbt.tokenIdOf(alice);
+        uint256 tid = sbt.mint(alice);
+        assertEq(tid, tokenIdBefore);
+
         vm.prank(alice);
-        sbt.burn(tokenId);
+        sbt.burn(tid);
 
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        bytes32 unlockedSig = keccak256("Unlocked(uint256)");
-        for (uint256 i = 0; i < logs.length; i++) {
-            assertNotEq(logs[i].topics[0], unlockedSig);
-        }
+        uint256 tokenIdAfter = sbt.tokenIdOf(alice);
+        assertEq(tokenIdAfter, tokenIdBefore);
+
+        uint256 tid2 = sbt.mint(alice);
+        assertEq(tid2, tokenIdBefore);
     }
 
     // ─── Multiple Addresses ───────────────────────────────────
