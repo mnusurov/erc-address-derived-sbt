@@ -24,12 +24,14 @@ This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)**
 
 ## Gas Efficiency
 
-| Operation | Gas Cost (approx) |
-|-----------|------------------|
-| Mint      | 32,092           |
-| Burn      | 26,491           |
-| ownerOf   | revert (unminted) / 34,176 (minted) |
-| balanceOf | 10,027 (unminted) / 33,317 (minted) |
+| Operation | Gas Cost (avg) |
+|-----------|----------------|
+| Mint      | 36,751         |
+| Burn      | 29,246         |
+| ownerOf   | revert (unminted) / 35,330 (minted) |
+| balanceOf | 9,939 (unminted) / 34,407 (minted) |
+
+*Gas numbers from Foundry tests, averaged across multiple runs.*
 
 ---
 
