@@ -1,14 +1,14 @@
 ---
 eip: XXXX
 title: Address-Derived Non-Transferable Token
-description: A minimal soulbound token standard where tokenId is deterministically derived from the owner's address XOR'd with the contract address.
+description: A minimal soulbound token where tokenId is deterministically derived from the owner's address XOR'd with the contract address.
 author: Marat Nusurov (@mnusurov)
 discussions-to: https://ethereum-magicians.org/t/erc-xxxx-address-derived-non-transferable-token
 status: Draft
 type: Standards Track
 category: ERC
 created: 2026-05-07
-requires: 165
+requires: 165, 721
 ---
 
 # EIP-XXXX: Address-Derived Non-Transferable Token
@@ -46,7 +46,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Every compliant contract MUST implement the `IERCXXXX` interface:
 
-The interface identifier for this standard is `0x5fc816fe`, computed as the XOR of selectors for `mint(address)`, `burn(uint256)`, and `tokenIdOf(address)`.
+The interface identifier for this standard is `0x5fc816fe`, computed per ERC-165 from all functions in IERCXXXX and its parent interfaces.
 
 ```solidity
 interface IERCXXXX is IERC165, IERC5192, IERC721Core, IERC721Metadata {
@@ -186,13 +186,14 @@ Address-derived token IDs solve this:
 The XOR operation provides:
 - **Cross-contract isolation**: Same owner gets different tokenIds in different contracts
 - **Invertibility without storage**: Owner can be computed from tokenId
+- **Collision-free**: XOR with `address(this)` is a bijection on `uint160` — two distinct owner addresses can never produce the same `tokenId` within a single contract
 - **Gas efficiency**: Cheaper than keccak256 hash
 
 ### Why mint() is in the Core Interface?
 
 Like ERC-8129, this standard defines `mint(address to)` as part of the core interface. The standard does not mandate access control — implementations choose their own minting policy:
 - Issuer-controlled: override `mint()` with an access control check
-- Self-issuance: deploy the reference implementation as-is
+- Self-issuance: override `mint()` with `require(to == msg.sender)` to restrict minting to self
 - Signature-based: override `mint()` to verify an off-chain signature
 
 This flexibility reflects real-world use cases where credential issuance models vary.
@@ -210,20 +211,20 @@ This flexibility reflects real-world use cases where credential issuance models 
 
 ### Comparison with ERC-4973
 
-ERC-4973 also uses a derived token ID — the EIP-712 hash of a bilateral agreement. This is a different form of derivation: the ID encodes the *content of consent* between issuer and receiver, not the receiver's identity. ERC-4973 still requires `mapping(uint256 => address)` for ownership and does not enforce one-per-address. Its design is optimised for consensual credential issuance where both parties sign; this standard is optimised for issuer-driven credential issuance where the receiver's identity itself is the token ID.
+ERC-4973 also uses a derived token ID — the EIP-712 hash of a bilateral agreement. This is a different form of derivation: the ID encodes the *content of consent* between issuer and receiver, not the receiver's identity. ERC-4973 still requires `mapping(uint256 => address)` for ownership and does not enforce one-per-address. Its design is optimized for consensual credential issuance where both parties sign; this standard is optimized for issuer-driven credential issuance where the receiver's identity itself is the token ID.
 
 ### Comparison with Existing Standards
 
-| Feature | ERC-721 Extensions | ERC-4973 | ERC-8129 | This Standard |
-|---------|-------------------|----------|----------|---------------|
+| Feature | ERC-5192 / ERC-5484 | ERC-4973 | ERC-8129 | This Standard |
+|---------|---------------------|----------|----------|---------------|
 | Token ID | Sequential counter | Hash(EIP-712 agreement) | Sequential counter | Deterministic (address-derived) |
 | Storage | `mapping(uint256 => address)` | `mapping(uint256 => address)` | `mapping(uint256 => address)` | `mapping(uint256 => bool)` |
-| One-per-address | Explicit check | Via agreement hash | Not enforced | Hard-enforced at tokenId |
+| One-per-address | Explicit check | Not enforced | Not enforced | Hard-enforced at tokenId |
 | ownerOf storage | Required | Required | Required | Computed (zero storage) |
 | Minting | Restricted (usually) | Bilateral consent (EIP-712) | Issuer-only | Implementation-defined |
 | Transfer functions | Present but blocked | Absent | Absent | Absent |
-| ERC-165 | Yes | Yes | No | Yes |
-| ERC-5192 | Via extensions | No | No | Interface-compatible |
+| ERC-165 | Yes | Yes | Yes | Yes |
+| ERC-5192 | Native / No | No | No | Interface-compatible |
 | Gas (mint) | ~50k+ | ~55k+ | ~45k | ~33k |
 
 ## Backwards Compatibility
