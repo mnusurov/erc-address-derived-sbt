@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity 0.8.35;
 
-/// @title ERC-721 Metadata Interface (from EIP-721)
-/// @dev This is a REQUIRED part of the standard
+/// @title ERC-721 Metadata Interface
+/// @dev See https://eips.ethereum.org/EIPS/eip-721
+///      Interface ID: 0x5b5e139f
+///      This is a REQUIRED part of the standard.
 interface IERC721Metadata {
     /// @notice A descriptive name for the token collection
     function name() external view returns (string memory);

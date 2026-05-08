@@ -2,7 +2,8 @@
 pragma solidity 0.8.35;
 
 /// @title Minimal ERC-721 Core Interface
-/// @dev Provides the Transfer event and the two read functions shared with ERC-721.
+/// @dev See https://eips.ethereum.org/EIPS/eip-721 for Transfer event spec.
+///      Provides the Transfer event and the two read functions shared with ERC-721.
 ///      IERCXXXX extends this interface to ensure Transfer event compatibility with
 ///      ERC-721 indexers and wallets without inheriting transfer functionality.
 interface IERC721Core {
