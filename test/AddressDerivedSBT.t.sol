@@ -200,6 +200,22 @@ contract AddressDerivedSBTTest is Test {
         assertEq(tid, expected);
     }
 
+    function test_TokenIdOf_ConsistentAfterReMint() public {
+        uint256 tokenIdBefore = sbt.tokenIdOf(alice);
+        uint256 tid = sbt.mint(alice);
+        assertEq(tid, tokenIdBefore);
+        
+        vm.prank(alice);
+        sbt.burn(tid);
+        
+        uint256 tokenIdAfter = sbt.tokenIdOf(alice);
+        assertEq(tokenIdAfter, tokenIdBefore);
+        
+        // Re-mint
+        uint256 tid2 = sbt.mint(alice);
+        assertEq(tid2, tokenIdBefore);
+    }
+
     function test_TokenIdOf_RoundTrip() public {
         address owner = alice;
         uint256 tid = sbt.tokenIdOf(owner);
@@ -221,6 +237,10 @@ contract AddressDerivedSBTTest is Test {
 
     function test_SupportsInterface_IERCXXXX() public view {
         assertEq(sbt.supportsInterface(type(IERCXXXX).interfaceId), true);
+    }
+
+    function test_InterfaceId_IERCXXXX_Correct() public pure {
+        assertEq(type(IERCXXXX).interfaceId, bytes4(0x5fc816fe));
     }
 
     function test_SupportsInterface_IERC5192() public view {
@@ -256,6 +276,32 @@ contract AddressDerivedSBTTest is Test {
         sbt.mint(alice);
     }
 
+    function test_Mint_EmitsLockedEventOnReMint() public {
+        // First mint
+        uint256 tokenId = sbt.mint(alice);
+        assertEq(sbt.ownerOf(tokenId), alice);
+        assertEq(sbt.balanceOf(alice), 1);
+
+        // Burn
+        vm.prank(alice);
+        sbt.burn(tokenId);
+        assertEq(sbt.balanceOf(alice), 0);
+
+        // Verify token is not minted
+        vm.expectRevert(IERCXXXX.NotMinted.selector);
+        sbt.ownerOf(tokenId);
+
+        // Re-mint should emit Locked event
+        uint256 expectedTokenId = sbt.tokenIdOf(alice);
+        vm.expectEmit(true, false, false, false);
+        emit IERC5192.Locked(expectedTokenId);
+        sbt.mint(alice);
+        
+        // Verify re-minted
+        assertEq(sbt.balanceOf(alice), 1);
+        assertEq(sbt.ownerOf(expectedTokenId), alice);
+    }
+
     function test_Burn_DoesNotEmitUnlocked() public {
         uint256 tokenId = sbt.mint(alice);
 
@@ -268,6 +314,16 @@ contract AddressDerivedSBTTest is Test {
         for (uint256 i = 0; i < logs.length; i++) {
             assertNotEq(logs[i].topics[0], unlockedSig);
         }
+    }
+
+    // ─── Multiple Addresses ───────────────────────────────────
+
+    function test_MultipleAddresses() public {
+        sbt.mint(alice);
+        sbt.mint(bob);
+        assertEq(sbt.balanceOf(alice), 1);
+        assertEq(sbt.balanceOf(bob), 1);
+        assertNotEq(sbt.tokenIdOf(alice), sbt.tokenIdOf(bob));
     }
 
     // ─── Cross-contract isolation ────────────────────────────────

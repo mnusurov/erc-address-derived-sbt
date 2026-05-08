@@ -225,7 +225,7 @@ ERC-4973 also uses a derived token ID — the EIP-712 hash of a bilateral agreem
 | Transfer functions | Present but blocked | Absent | Absent | Absent |
 | ERC-165 | Yes | Yes | Yes | Yes |
 | ERC-5192 | Native / No | No | No | Interface-compatible |
-| Gas (mint/burn) | ~50k+ / ~45k+ | ~55k+ / ~50k+ | ~45k / ~40k | ~37k / ~29k |
+| Gas (mint/burn) | ~50k+ / ~45k+ | ~55k+ / ~50k+ | ~45k / ~40k | 33k / 27k |
 
 ## Backwards Compatibility
 
@@ -273,13 +273,6 @@ contract AddressDerivedSBT is IERCXXXX {
         emit Transfer(owner, address(0), tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) external pure virtual returns (bool) {
-        return interfaceId == 0x5fc816fe // IERCXXXX
-            || interfaceId == 0x01ffc9a7 // IERC165
-            || interfaceId == 0xb45a3c0e // IERC5192
-            || interfaceId == 0x5b5e139f; // IERC721Metadata
-    }
-
     function balanceOf(address owner) external view virtual returns (uint256) {
         return _isMinted[tokenIdOf(owner)] ? 1 : 0;
     }
@@ -300,6 +293,13 @@ contract AddressDerivedSBT is IERCXXXX {
     function tokenURI(uint256 tokenId) external view virtual returns (string memory) {
         require(_isMinted[tokenId], NotMinted());
         return _baseUri;
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure virtual returns (bool) {
+        return interfaceId == 0x5fc816fe // IERCXXXX
+            || interfaceId == 0x01ffc9a7 // IERC165
+            || interfaceId == 0xb45a3c0e // IERC5192
+            || interfaceId == 0x5b5e139f; // IERC721Metadata
     }
 
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
