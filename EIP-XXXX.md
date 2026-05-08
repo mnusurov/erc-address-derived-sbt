@@ -42,34 +42,6 @@ This proposal solves these by making the `tokenId` itself represent the owner's 
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 
-### Supporting Interfaces
-
-Compliant contracts MUST implement the following supporting interfaces:
-
-```solidity
-// SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.26;
-
-/// Minimal ERC-721 Core — Transfer event + balanceOf + ownerOf
-interface IERC721Core {
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    function balanceOf(address owner) external view returns (uint256);
-    function ownerOf(uint256 tokenId) external view returns (address);
-}
-
-/// ERC-165 Standard Interface Detection
-interface IERC165 {
-    function supportsInterface(bytes4 interfaceId) external view returns (bool);
-}
-
-/// ERC-5192 Minimal Soulbound NFTs (Interface ID: 0xb45a3c0e)
-interface IERC5192 {
-    event Locked(uint256 tokenId);
-    event Unlocked(uint256 tokenId);
-    function locked(uint256 tokenId) external view returns (bool);
-}
-```
-
 ### Core Interface (IERCXXXX)
 
 Every compliant contract MUST implement the `IERCXXXX` interface:
@@ -77,12 +49,14 @@ Every compliant contract MUST implement the `IERCXXXX` interface:
 The interface identifier for this standard is `0x5fc816fe`, computed as the XOR of selectors for `mint(address)`, `burn(uint256)`, and `tokenIdOf(address)`.
 
 ```solidity
-// SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.26;
-
 interface IERCXXXX is IERC165, IERC5192, IERC721Core {
+    /// @dev Thrown when attempting to mint to an address that already holds a token
     error AlreadyMinted();
+
+    /// @dev Thrown when querying a token that has not been minted
     error NotMinted();
+
+    /// @dev Thrown when caller is not the token owner
     error NotAuthorized();
 
     /// @notice Mint a token to the specified address
@@ -93,37 +67,55 @@ interface IERCXXXX is IERC165, IERC5192, IERC721Core {
     function mint(address to) external returns (uint256 tokenId);
 
     /// @notice Burn the token with the given ID
-    /// @dev Only token owner MAY burn. MUST revert if not minted or caller is not owner.
+    /// @dev Only the token owner MAY burn their token.
+    ///      MUST revert if token not minted or caller is not the token owner.
     ///      MUST emit Transfer(owner, address(0), tokenId).
     /// @param tokenId ID of the token to burn
     function burn(uint256 tokenId) external;
 
     /// @notice Derive the token ID for a given owner address
     /// @dev Computed as: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
+    ///      Cross-contract isolation: same owner gets different tokenIds in different contracts.
     /// @param owner Address to derive token ID from
     /// @return tokenId The derived token ID
     function tokenIdOf(address owner) external view returns (uint256 tokenId);
 }
 ```
 
-### Metadata Interface (Required)
+### Required Interfaces
 
-Compliant contracts MUST implement the ERC-721 metadata interface:
+Compliant contracts MUST implement the following interfaces:
 
+**IERC721Core** — Minimal ERC-721 Core (Transfer event + balanceOf + ownerOf)
 ```solidity
-/// @title ERC-721 Metadata Interface (from EIP-721)
-/// @dev This is a REQUIRED part of the standard
+interface IERC721Core {
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    function balanceOf(address owner) external view returns (uint256);
+    function ownerOf(uint256 tokenId) external view returns (address);
+}
+```
+
+**IERC165** — Standard Interface Detection
+```solidity
+interface IERC165 {
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+}
+```
+
+**IERC5192** — Minimal Soulbound NFTs (Interface ID: 0xb45a3c0e)
+```solidity
+interface IERC5192 {
+    event Locked(uint256 tokenId);
+    event Unlocked(uint256 tokenId);
+    function locked(uint256 tokenId) external view returns (bool);
+}
+```
+
+**IERC721Metadata** — ERC-721 Metadata Interface
+```solidity
 interface IERC721Metadata {
-    /// @notice A descriptive name for the token collection
     function name() external view returns (string memory);
-
-    /// @notice An abbreviated name for the token collection
     function symbol() external view returns (string memory);
-
-    /// @notice A URI pointing to metadata for a specific token
-    /// @dev MUST revert if tokenId not minted
-    /// @param tokenId The identifier of the token
-    /// @return The URI string
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 ```
