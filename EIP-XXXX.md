@@ -21,10 +21,14 @@ This EIP proposes a minimal standard for non-transferable tokens (Soulbound toke
 
 Most Soulbound token implementations rely on extending ERC-721 with transfer restrictions (ERC-5192, ERC-5484) or introduce consensual transfer mechanisms (ERC-4973). These approaches suffer from:
 
-1. **Storage overhead** — require `mapping(uint256 => address)` for ownership tracking
-2. **Allow multiple tokens per address** — can mint multiple tokens to same address unless explicitly checked
-3. **Gas inefficiency** — `ownerOf` and `balanceOf` require storage lookups
-4. **Sequential token IDs** — tokenId is just a counter, not tied to identity
+1. **Storage overhead**: typical ERC-721-based SBTs inherit multiple unused state
+   variables (`owners`, `balances`, `tokenApprovals`, `operatorApprovals`) and
+   often a sequential counter that is not tied to the owner's identity. This
+   standard replaces all of them with a single `mapping(uint256 => bool)` for
+   existence tracking.
+2. **Allow multiple tokens per address**: unless explicitly checked, the same
+   address can receive several tokens, contradicting the one-to-one semantics
+   expected from many credentials.
 
 ERC-8129 improves this by removing transfer functions entirely, but still uses sequential token IDs and `mapping(uint256 => address)` storage.
 
@@ -273,7 +277,7 @@ contract AddressDerivedSBT is IERC721Metadata, IERCXXXX {
     function burn(uint256 tokenId) external virtual {
         address owner = ownerOf(tokenId);
         require(msg.sender == owner, NotAuthorized());
-        _isMinted[tokenId] = false;
+        delete _isMinted[tokenId];
         emit Transfer(owner, address(0), tokenId);
     }
 

@@ -25,7 +25,7 @@ contract AddressDerivedSBT is IERC721Metadata, IERCXXXX {
         address owner = ownerOf(tokenId);
         require(msg.sender == owner, NotAuthorized());
 
-        _isMinted[tokenId] = false;
+        delete _isMinted[tokenId];
 
         emit Transfer(owner, address(0), tokenId);
     }
