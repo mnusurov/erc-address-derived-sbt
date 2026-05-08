@@ -2,13 +2,13 @@
 
 **Deterministic Address-Bound Soulbound Token Standard**
 
-> Ultra-minimal, gas-efficient, storage-optimized non-transferable token where `tokenId` is deterministically derived from the owner's address.
+> Ultra-minimal, gas-efficient, storage-optimized non-transferable token where `tokenId` is deterministically derived from the owner's address XOR'd with the contract address.
 
 ---
 
 ## Abstract
 
-This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)** / non-transferable tokens, where the `tokenId` is not a sequential counter, but a **deterministic function of the recipient's address** (`uint256(uint160(owner))`).
+This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)** / non-transferable tokens, where the `tokenId` is not a sequential counter, but a **deterministic function of the recipient's address XOR'd with the contract address** — see `tokenIdOf()` in IERCXXXX interface.
 
 This design enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, simplifies `ownerOf` and `balanceOf`, and makes the semantics of the token extremely clear.
 
@@ -27,21 +27,22 @@ Most Soulbound tokens (diplomas, memberships, attestations, achievements, KYC cr
 
 Existing standards (ERC-721 + ERC-5192/5484, ERC-4973, ERC-8129) either:
 - Waste storage on mappings,
-- Allow accidental multiple mints to the same address,
+- Allow multiple tokens per address,
 - Or require unnecessary complexity.
 
-**Address-Derived design** solves these problems elegantly by making the `tokenId` itself carry the identity of the owner.
+**Address-Derived design** solves these problems elegantly by making the `tokenId` itself encode the owner's identity (XOR with the contract address for cross-contract isolation).
 
 ---
 
 ## Key Features
 
-- **Deterministic Token ID**: `tokenId = uint256(uint160(owner)) ^ uint256(uint160(address(this)))`
+- **Deterministic Token ID**: See `tokenIdOf()` in IERCXXXX interface
 - **Strict one-per-address** enforced at the token ID level
 - **Simple mapping storage**: existence tracking via a single `mapping(uint256 => bool)`
 - **Gas-efficient** `ownerOf` and `balanceOf`
 - **No approvals, no transfers, no operators** (true non-transferable)
-- **Permissionless minting** — anyone can mint a token to any address (one per address enforced at tokenId level)
+- **ERC-5192 compatible** — `Locked` event on mint, `locked()` always returns `true`
+- **ERC-165 support** — standard interface detection via `supportsInterface`
 - **Transfer events** on mint/burn for indexer compatibility (Etherscan, The Graph)
 - **Name, Symbol, and Base URI** set at construction time, all functions virtual for extensibility
 - Extremely simple and auditable contract (~70 LOC)
@@ -54,7 +55,7 @@ Existing standards (ERC-721 + ERC-5192/5484, ERC-4973, ERC-8129) either:
 // Deploy
 AddressDerivedSBT sbt = new AddressDerivedSBT("Name", "SYM", "https://base.uri/");
 
-// Minting (permissionless — anyone can mint to any address)
+// Minting (access control is implementation-defined — override mint() to add restrictions)
 sbt.mint(studentAddress);        // tokenId is automatically derived
 
 // Querying
@@ -81,11 +82,12 @@ interface IERCXXXX {
     function mint(address to) external returns (uint256 tokenId);
     function burn(uint256 tokenId) external;
     function ownerOf(uint256 tokenId) external view returns (address owner);
+    function tokenIdOf(address owner) external view returns (uint256 tokenId);
     function balanceOf(address owner) external view returns (uint256);
 }
 ```
 
-### IERC721Metadata (Optional, for metadata)
+### IERC721Metadata (for metadata)
 
 ```solidity
 interface IERC721Metadata {
@@ -102,11 +104,11 @@ The reference implementation implements both interfaces (`AddressDerivedSBT is I
 | Operation | Gas Cost (approx) |
 |-----------|------------------|
 | Mint      | 32,092         |
-| Burn      | 26,438         |
-| ownerOf   | revert (unminted) / 34,145 (minted) |
-| balanceOf | 10,005 (unminted) / 33,295 (minted) |
+| Burn      | 26,491         |
+| ownerOf   | revert (unminted) / 34,176 (minted) |
+| balanceOf | 10,027 (unminted) / 33,317 (minted) |
 
-The reference implementation uses a simple `mapping(uint256 => bool)` for existence tracking, keeping the contract minimal, auditable, and gas-efficient for the one-per-address use case. Minting is permissionless — any address can mint a token to any recipient.
+The reference implementation uses a simple `mapping(uint256 => bool)` for existence tracking, keeping the contract minimal, auditable, and gas-efficient for the one-per-address use case.
 
 ---
 

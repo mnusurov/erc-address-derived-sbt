@@ -1,16 +1,14 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC0-1.0
 pragma solidity 0.8.35;
+
+import {IERC165} from "./IERC165.sol";
+import {IERC5192} from "./IERC5192.sol";
+import {IERC721Core} from "./IERC721Core.sol";
 
 /// @title ERC-XXXX Address-Derived Non-Transferable Token
 /// @dev See https://eips.ethereum.org/EIPS/eip-XXXX
-/// @dev Token ID is derived deterministically, see tokenIdOf()
-interface IERCXXXX {
-    /// @dev Emitted when a token is minted (from address(0)) or burned (to address(0))
-    /// @param from Sender address (address(0) on mint)
-    /// @param to Recipient address (address(0) on burn)
-    /// @param tokenId Token ID, see tokenIdOf()
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
+/// @dev Token ID is derived deterministically: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
+interface IERCXXXX is IERC165, IERC5192, IERC721Core {
     /// @dev Thrown when attempting to mint to an address that already holds a token
     error AlreadyMinted();
 
@@ -22,31 +20,22 @@ interface IERCXXXX {
 
     /// @notice Mint a token to the specified address
     /// @dev Reverts if token already minted. Token ID is derived deterministically, see tokenIdOf().
+    ///      MUST emit Transfer(address(0), to, tokenId) and Locked(tokenId).
     /// @param to Address to receive the token
     /// @return tokenId The derived token ID
     function mint(address to) external returns (uint256 tokenId);
 
     /// @notice Burn the token with the given ID
-    /// @dev Reverts if token not minted or if caller is not the token owner
+    /// @dev Only the token owner MAY burn their token.
+    ///      MUST revert if token not minted or caller is not the token owner.
+    ///      MUST emit Transfer(owner, address(0), tokenId).
     /// @param tokenId ID of the token to burn
     function burn(uint256 tokenId) external;
 
-    /// @notice Get the owner of a token by token ID
-    /// @dev Reverts if token not minted
-    /// @param tokenId ID of the token to query
-    /// @return owner The address that owns the token
-    function ownerOf(uint256 tokenId) external view returns (address owner);
-
     /// @notice Derive the token ID for a given owner address
     /// @dev Computed as: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
-    ///      This provides cross-contract tokenId isolation - same owner gets different tokenIds in different contracts
+    ///      Cross-contract isolation: same owner gets different tokenIds in different contracts.
     /// @param owner Address to derive token ID from
     /// @return tokenId The derived token ID
     function tokenIdOf(address owner) external view returns (uint256 tokenId);
-
-    /// @notice Get the token count for an address
-    /// @dev Always returns 0 or 1 - only one token per address is allowed by design
-    /// @param owner Address to query balance for
-    /// @return Number of tokens owned (0 or 1)
-    function balanceOf(address owner) external view returns (uint256);
 }

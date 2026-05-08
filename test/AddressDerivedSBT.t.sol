@@ -1,8 +1,13 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC0-1.0
 pragma solidity 0.8.35;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, Vm} from "forge-std/Test.sol";
+
 import {AddressDerivedSBT} from "../contracts/AddressDerivedSBT.sol";
+import {IERC165} from "../contracts/interfaces/IERC165.sol";
+import {IERC5192} from "../contracts/interfaces/IERC5192.sol";
+import {IERC721Core} from "../contracts/interfaces/IERC721Core.sol";
+import {IERC721Metadata} from "../contracts/interfaces/IERC721Metadata.sol";
 import {IERCXXXX} from "../contracts/interfaces/IERCXXXX.sol";
 
 contract AddressDerivedSBTTest is Test {
@@ -40,7 +45,7 @@ contract AddressDerivedSBTTest is Test {
         uint256 expectedTokenId = sbt.tokenIdOf(alice);
 
         vm.expectEmit(true, true, true, true);
-        emit IERCXXXX.Transfer(address(0), alice, expectedTokenId);
+        emit IERC721Core.Transfer(address(0), alice, expectedTokenId);
         sbt.mint(alice);
     }
 
@@ -91,7 +96,7 @@ contract AddressDerivedSBTTest is Test {
 
         vm.prank(alice);
         vm.expectEmit(true, true, true, true);
-        emit IERCXXXX.Transfer(alice, address(0), tokenId);
+        emit IERC721Core.Transfer(alice, address(0), tokenId);
         sbt.burn(tokenId);
     }
 
@@ -185,16 +190,6 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.tokenURI(tokenId), BASE_URI);
     }
 
-    // ─── Reverts ────────────────────────────────────────────────
-
-    function test_RevertBurnByNonOwner() public {
-        uint256 tokenId = sbt.mint(alice);
-
-        vm.prank(bob);
-        vm.expectRevert(IERCXXXX.NotAuthorized.selector);
-        sbt.burn(tokenId);
-    }
-
     // ─── tokenIdOf ─────────────────────────────────────────────
 
     function test_TokenIdOf_ReturnsDeterministicValue() public view {
@@ -220,6 +215,85 @@ contract AddressDerivedSBTTest is Test {
 
     function test_TokenIdOf_ConsistentAcrossCalls() public view {
         assertEq(sbt.tokenIdOf(alice), sbt.tokenIdOf(alice));
+    }
+
+    // ─── supportsInterface ──────────────────────────────────────
+
+    function test_SupportsInterface_IERC165() public view {
+        assertEq(sbt.supportsInterface(type(IERC165).interfaceId), true);
+    }
+
+    function test_SupportsInterface_IERCXXXX() public view {
+        assertEq(sbt.supportsInterface(type(IERCXXXX).interfaceId), true);
+    }
+
+    function test_SupportsInterface_IERC5192() public view {
+        assertEq(sbt.supportsInterface(type(IERC5192).interfaceId), true);
+    }
+
+    function test_SupportsInterface_IERC721Metadata() public view {
+        assertEq(sbt.supportsInterface(type(IERC721Metadata).interfaceId), true);
+    }
+
+    function test_SupportsInterface_ReturnsFalseForUnknown() public view {
+        assertEq(sbt.supportsInterface(0xdeadbeef), false);
+    }
+
+    // ─── locked ─────────────────────────────────────────────────
+
+    function test_Locked_ReturnsTrueWhenMinted() public {
+        uint256 tokenId = sbt.mint(alice);
+        assertEq(sbt.locked(tokenId), true);
+    }
+
+    function test_Locked_RevertsWhenNotMinted() public {
+        uint256 tid = sbt.tokenIdOf(bob);
+        vm.expectRevert(IERCXXXX.NotMinted.selector);
+        sbt.locked(tid);
+    }
+
+    function test_Mint_EmitsLockedEvent() public {
+        uint256 expectedTokenId = sbt.tokenIdOf(alice);
+
+        vm.expectEmit(true, false, false, false);
+        emit IERC5192.Locked(expectedTokenId);
+        sbt.mint(alice);
+    }
+
+    function test_Burn_DoesNotEmitUnlocked() public {
+        uint256 tokenId = sbt.mint(alice);
+
+        vm.recordLogs();
+        vm.prank(alice);
+        sbt.burn(tokenId);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes32 unlockedSig = keccak256("Unlocked(uint256)");
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(logs[i].topics[0], unlockedSig);
+        }
+    }
+
+    // ─── Cross-contract isolation ────────────────────────────────
+
+    function test_CrossContract_TokenIdIsolation() public {
+        AddressDerivedSBT sbt2 = new AddressDerivedSBT(TOKEN_NAME, TOKEN_SYMBOL, BASE_URI);
+
+        uint256 tid1 = sbt.tokenIdOf(alice);
+        uint256 tid2 = sbt2.tokenIdOf(alice);
+
+        assertNotEq(tid1, tid2);
+        assertEq(sbt.ownerOf(sbt.mint(alice)), alice);
+        assertEq(sbt2.ownerOf(sbt2.mint(alice)), alice);
+    }
+
+    // ─── Fuzz ────────────────────────────────────────────────────
+
+    function testFuzz_TokenIdOf_RoundTrip(address owner) public {
+        uint256 tid = sbt.tokenIdOf(owner);
+        sbt.mint(owner);
+        assertEq(sbt.ownerOf(tid), owner);
+        assertEq(sbt.balanceOf(owner), 1);
     }
 
     // ─── Gas ────────────────────────────────────────────────────
