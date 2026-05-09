@@ -4,11 +4,16 @@
 
 > Ultra-minimal, gas-efficient, storage-optimized non-transferable token where `tokenId` is deterministically derived from the owner's address — see [EIP-XXXX.md](./EIP-XXXX.md) for the full specification.
 
+[![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey)](LICENSE)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8.35-363636?logo=solidity)](https://github.com/ethereum/solidity)
+[![Foundry](https://img.shields.io/badge/Built%20with-Foundry-000000?logo=ethereum)](https://book.getfoundry.sh/)
+[![EIP](https://img.shields.io/badge/EIP-Draft-blueviolet)](./EIP-XXXX.md)
+
 ---
 
 ## Abstract
 
-This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)** where the `tokenId` is deterministically derived from the owner's address. It enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, and makes the semantics of the token extremely clear. It builds upon and extends **[ERC-8129: Non-Transferable Token](https://ethereum-magicians.org/t/erc-8129-non-transferable-token/27407)**.
+This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)** where the `tokenId` is deterministically derived from the owner's address. It enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, and makes the semantics of the token extremely clear. **Inspired by** **[ERC-8129: Non-Transferable Token](https://ethereum-magicians.org/t/erc-8129-non-transferable-token/27407)**'s approach of a dedicated non-transferable standard, this proposal replaces sequential token IDs with address-derived deterministic token IDs for stronger guarantees and lower storage.
 
 ---
 
