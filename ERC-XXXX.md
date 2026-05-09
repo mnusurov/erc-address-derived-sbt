@@ -15,7 +15,7 @@ requires: 165, 721
 
 ## Abstract
 
-This standard proposes a minimal standard for non-transferable tokens (Soulbound tokens) where the `tokenId` is **deterministically derived** from the owner's address using XOR with the contract address: `tokenId = uint256(uint160(owner)) ^ uint256(uint160(address(this)))`. This design enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, and makes the semantics of the token extremely clear.
+This standard proposes a minimal standard for non-transferable tokens (Soulbound tokens) where the `tokenId` is **deterministically derived** from the owner's address using XOR with the contract address: `tokenId = uint256(uint160(owner)) ^ uint160(address(this))`. This design enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, and makes the semantics of the token extremely clear.
 
 ## Motivation
 
@@ -74,7 +74,7 @@ interface IERCXXXX is IERC165, IERC5192, IERC721Core, IERC721Metadata {
     function burn(uint256 tokenId) external;
 
     /// @notice Derive the token ID for a given owner address
-    /// @dev Computed as: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
+    /// @dev Computed as: uint256(uint160(owner)) ^ uint160(address(this))
     ///      Cross-contract isolation: same owner gets different tokenIds in different contracts.
     /// @param owner Address to derive token ID from
     /// @return tokenId The derived token ID
@@ -122,11 +122,11 @@ interface IERC721Metadata {
 
 ### Behavior Specification
 
-1. **Token ID Derivation**: `tokenIdOf(owner) = uint256(uint160(owner)) ^ uint256(uint160(address(this)))`
+1. **Token ID Derivation**: `tokenIdOf(owner) = uint256(uint160(owner)) ^ uint160(address(this))`
    - XOR provides cross-contract isolation — same owner gets different tokenIds in different contracts
-   - Owner can be computed from tokenId via inverse XOR: `owner = address(uint160(tokenId ^ uint256(uint160(address(this)))))`
+   - Owner can be computed from tokenId via inverse XOR: `owner = address(uint160(tokenId ^ uint160(address(this))))`
    - One-per-address is hard-enforced at tokenId level
-   - For `owner = address(0)`, `tokenIdOf` returns `uint256(uint160(address(this)))`, which is a valid tokenId. Minting to `address(0)` is not prohibited by this standard.
+   - For `owner = address(0)`, `tokenIdOf` returns `uint160(address(this))`, which is a valid tokenId (implicitly widened to uint256). Minting to `address(0)` is not prohibited by this standard.
 
 2. **Minting**:
    - Tokens MUST be minted to a specified address via the `to` parameter
@@ -304,11 +304,11 @@ contract AddressDerivedSBT is IERCXXXX {
 
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(_isMinted[tokenId], NotMinted());
-        return address(uint160(tokenId ^ uint256(uint160(address(this)))));
+        return address(uint160(tokenId ^ uint160(address(this))));
     }
 
     function tokenIdOf(address owner) public view virtual returns (uint256) {
-        return uint256(uint160(owner)) ^ uint256(uint160(address(this)));
+        return uint256(uint160(owner)) ^ uint160(address(this));
     }
 
     function _mint(address to) internal virtual returns (uint256 tokenId) {
@@ -355,7 +355,7 @@ If a user's private key is compromised, the attacker gains access to the non-tra
 
 ### Minting to address(0)
 
-`tokenIdOf(address(0))` returns a valid, non-zero tokenId (`= uint256(uint160(address(this)))`). If a token is minted to `address(0)`, no one can ever burn it — `msg.sender` can never equal `address(0)`. This creates a permanently occupied slot. Implementations SHOULD add `require(to != address(0))` in `mint()` if this is undesirable.
+`tokenIdOf(address(0))` returns a valid, non-zero tokenId (`= uint160(address(this))`). If a token is minted to `address(0)`, no one can ever burn it — `msg.sender` can never equal `address(0)`. This creates a permanently occupied slot. Implementations SHOULD add `require(to != address(0))` in `mint()` if this is undesirable.
 
 ### Permanent Binding
 

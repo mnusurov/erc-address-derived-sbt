@@ -58,11 +58,11 @@ contract AddressDerivedSBT is IERCXXXX {
 
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(_isMinted[tokenId], NotMinted());
-        return address(uint160(tokenId ^ uint256(uint160(address(this))))); // forge-lint: disable-line(unsafe-typecast)
+        return address(uint160(tokenId ^ uint160(address(this)))); // forge-lint: disable-line(unsafe-typecast)
     }
 
     function tokenIdOf(address owner) public view virtual returns (uint256) {
-        return uint256(uint160(owner)) ^ uint256(uint160(address(this)));
+        return uint256(uint160(owner)) ^ uint160(address(this));
     }
 
     function _mint(address to) internal virtual returns (uint256 tokenId) {

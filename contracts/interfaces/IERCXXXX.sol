@@ -8,7 +8,7 @@ import {IERC721Metadata} from "./IERC721Metadata.sol";
 
 /// @title ERC-XXXX Address-Derived Non-Transferable Token
 /// @dev See https://eips.ethereum.org/EIPS/eip-XXXX
-/// @dev Token ID is derived deterministically: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
+/// @dev Token ID is derived deterministically: uint256(uint160(owner)) ^ uint160(address(this))
 interface IERCXXXX is IERC165, IERC5192, IERC721Core, IERC721Metadata {
     /// @dev Thrown when attempting to mint to an address that already holds a token
     error AlreadyMinted();
@@ -34,7 +34,7 @@ interface IERCXXXX is IERC165, IERC5192, IERC721Core, IERC721Metadata {
     function burn(uint256 tokenId) external;
 
     /// @notice Derive the token ID for a given owner address
-    /// @dev Computed as: uint256(uint160(owner)) ^ uint256(uint160(address(this)))
+    /// @dev Computed as: uint256(uint160(owner)) ^ uint160(address(this))
     ///      Cross-contract isolation: same owner gets different tokenIds in different contracts.
     /// @param owner Address to derive token ID from
     /// @return tokenId The derived token ID
