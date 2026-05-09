@@ -8,7 +8,7 @@ status: Draft
 type: Standards Track
 category: ERC
 created: 2026-05-07
-requires: 165, 721
+requires: 165
 ---
 
 # ERC-XXXX: Address-Derived Non-Transferable Token
