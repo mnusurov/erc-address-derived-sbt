@@ -7,21 +7,23 @@ import {AddressDerivedSBT} from "../contracts/AddressDerivedSBT.sol";
 import {IERC165, IERC5192, IERC721Core, IERC721Metadata, IERCXXXX} from "../contracts/interfaces/IERCXXXX.sol";
 
 contract AddressDerivedSBTTest is Test {
-    AddressDerivedSBT public sbt;
-    address public alice = address(0x5678);
-    address public bob = address(0x9ABC);
+    AddressDerivedSBT internal sbt;
+    address internal alice;
+    address internal bob;
 
-    string public constant TOKEN_NAME = "Address-Derived SBT";
-    string public constant TOKEN_SYMBOL = "ADSBT";
-    string public constant BASE_URI = "https://example.com/metadata/";
+    string internal constant TOKEN_NAME = "Address-Derived SBT";
+    string internal constant TOKEN_SYMBOL = "ADSBT";
+    string internal constant BASE_URI = "https://example.com/metadata/";
 
-    function setUp() public {
+    function setUp() external {
+        alice = makeAddr("alice");
+        bob = makeAddr("bob");
         sbt = new AddressDerivedSBT(TOKEN_NAME, TOKEN_SYMBOL, BASE_URI);
     }
 
     // ─── Mint ───────────────────────────────────────────────────
 
-    function test_Mint_Success() public {
+    function test_Mint_Success() external {
         uint256 tokenId = sbt.mint(alice);
 
         uint256 expectedTokenId = sbt.tokenIdOf(alice);
@@ -30,14 +32,14 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.balanceOf(alice), 1);
     }
 
-    function test_Mint_RevertWhen_AlreadyMinted() public {
+    function test_Mint_RevertWhen_AlreadyMinted() external {
         sbt.mint(alice);
 
         vm.expectRevert(IERCXXXX.AlreadyMinted.selector);
         sbt.mint(alice);
     }
 
-    function test_Mint_EmitsTransferEvent() public {
+    function test_Mint_EmitsTransferEvent() external {
         uint256 expectedTokenId = sbt.tokenIdOf(alice);
 
         vm.expectEmit(true, true, true, true);
@@ -45,7 +47,7 @@ contract AddressDerivedSBTTest is Test {
         sbt.mint(alice);
     }
 
-    function test_Mint_AllowsMintToZeroAddress() public {
+    function test_Mint_AllowsMintToZeroAddress() external {
         uint256 tid = sbt.mint(address(0));
 
         uint256 expectedTid = sbt.tokenIdOf(address(0));
@@ -54,7 +56,7 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.balanceOf(address(0)), 1);
     }
 
-    function test_Mint_AllowsAnyAddressToMintForAlice() public {
+    function test_Mint_AllowsAnyAddressToMintForAlice() external {
         vm.prank(bob);
         uint256 tokenId = sbt.mint(alice);
 
@@ -63,7 +65,7 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── Burn ───────────────────────────────────────────────────
 
-    function test_Burn_ByOwner() public {
+    function test_Burn_ByOwner() external {
         uint256 tokenId = sbt.mint(alice);
         assertEq(sbt.balanceOf(alice), 1);
 
@@ -73,7 +75,7 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.balanceOf(alice), 0);
     }
 
-    function test_Burn_RevertWhen_NotOwner() public {
+    function test_Burn_RevertWhen_NotOwner() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(bob);
@@ -81,13 +83,13 @@ contract AddressDerivedSBTTest is Test {
         sbt.burn(tokenId);
     }
 
-    function test_Burn_RevertWhen_NotMinted() public {
+    function test_Burn_RevertWhen_NotMinted() external {
         uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
         sbt.burn(tid);
     }
 
-    function test_Burn_EmitsTransferEvent() public {
+    function test_Burn_EmitsTransferEvent() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
@@ -96,7 +98,7 @@ contract AddressDerivedSBTTest is Test {
         sbt.burn(tokenId);
     }
 
-    function test_Burn_AllowsReMint() public {
+    function test_Burn_AllowsReMint() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
@@ -109,20 +111,20 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── balanceOf ──────────────────────────────────────────────
 
-    function test_BalanceOf_ReturnsZeroForUnmintedAddress() public view {
+    function test_BalanceOf_ReturnsZeroForUnmintedAddress() external view {
         assertEq(sbt.balanceOf(bob), 0);
     }
 
-    function test_BalanceOf_ReturnsOneForMintedAddress() public {
+    function test_BalanceOf_ReturnsOneForMintedAddress() external {
         sbt.mint(alice);
         assertEq(sbt.balanceOf(alice), 1);
     }
 
-    function test_BalanceOf_ReturnsZeroForZeroAddress() public view {
+    function test_BalanceOf_ReturnsZeroForZeroAddress() external view {
         assertEq(sbt.balanceOf(address(0)), 0);
     }
 
-    function test_BalanceOf_ReturnsZeroAfterBurn() public {
+    function test_BalanceOf_ReturnsZeroAfterBurn() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
@@ -133,18 +135,18 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── locked ─────────────────────────────────────────────────
 
-    function test_Locked_ReturnsTrueWhenMinted() public {
+    function test_Locked_ReturnsTrueWhenMinted() external {
         uint256 tokenId = sbt.mint(alice);
         assertEq(sbt.locked(tokenId), true);
     }
 
-    function test_Locked_RevertsWhenNotMinted() public {
+    function test_Locked_RevertsWhenNotMinted() external {
         uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
         sbt.locked(tid);
     }
 
-    function test_Mint_EmitsLockedEvent() public {
+    function test_Mint_EmitsLockedEvent() external {
         uint256 expectedTokenId = sbt.tokenIdOf(alice);
 
         vm.expectEmit(true, false, false, false);
@@ -152,7 +154,7 @@ contract AddressDerivedSBTTest is Test {
         sbt.mint(alice);
     }
 
-    function test_Mint_EmitsLockedEventOnReMint() public {
+    function test_Mint_EmitsLockedEventOnReMint() external {
         uint256 tokenId = sbt.mint(alice);
         assertEq(sbt.ownerOf(tokenId), alice);
         assertEq(sbt.balanceOf(alice), 1);
@@ -173,7 +175,7 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.ownerOf(expectedTokenId), alice);
     }
 
-    function test_Burn_DoesNotEmitUnlocked() public {
+    function test_Burn_DoesNotEmitUnlocked() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.recordLogs();
@@ -189,26 +191,26 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── Metadata ───────────────────────────────────────────────
 
-    function test_Name() public view {
+    function test_Name() external view {
         assertEq(sbt.name(), TOKEN_NAME);
     }
 
-    function test_Symbol() public view {
+    function test_Symbol() external view {
         assertEq(sbt.symbol(), TOKEN_SYMBOL);
     }
 
-    function test_TokenURI_RevertWhenNotMinted() public {
+    function test_TokenURI_RevertWhenNotMinted() external {
         uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
         sbt.tokenURI(tid);
     }
 
-    function test_TokenURI_ReturnsBaseURI() public {
+    function test_TokenURI_ReturnsBaseURI() external {
         uint256 tokenId = sbt.mint(alice);
         assertEq(sbt.tokenURI(tokenId), BASE_URI);
     }
 
-    function test_TokenURI_ReturnsBaseURIAfterReMint() public {
+    function test_TokenURI_ReturnsBaseURIAfterReMint() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
@@ -221,44 +223,44 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── supportsInterface ──────────────────────────────────────
 
-    function test_SupportsInterface_IERC165() public view {
+    function test_SupportsInterface_IERC165() external view {
         assertEq(sbt.supportsInterface(type(IERC165).interfaceId), true);
     }
 
-    function test_SupportsInterface_IERCXXXX() public view {
+    function test_SupportsInterface_IERCXXXX() external view {
         assertEq(sbt.supportsInterface(type(IERCXXXX).interfaceId), true);
     }
 
-    function test_InterfaceId_IERCXXXX_Correct() public pure {
+    function test_InterfaceId_IERCXXXX_Correct() external pure {
         assertEq(type(IERCXXXX).interfaceId, bytes4(0x5fc816fe));
     }
 
-    function test_SupportsInterface_IERC5192() public view {
+    function test_SupportsInterface_IERC5192() external view {
         assertEq(sbt.supportsInterface(type(IERC5192).interfaceId), true);
     }
 
-    function test_SupportsInterface_IERC721Metadata() public view {
+    function test_SupportsInterface_IERC721Metadata() external view {
         assertEq(sbt.supportsInterface(type(IERC721Metadata).interfaceId), true);
     }
 
-    function test_SupportsInterface_ReturnsFalseForUnknown() public view {
+    function test_SupportsInterface_ReturnsFalseForUnknown() external view {
         assertEq(sbt.supportsInterface(0xdeadbeef), false);
     }
 
     // ─── ownerOf ────────────────────────────────────────────────
 
-    function test_OwnerOf_RevertWhenNotMinted() public {
+    function test_OwnerOf_RevertWhenNotMinted() external {
         uint256 tid = sbt.tokenIdOf(bob);
         vm.expectRevert(IERCXXXX.NotMinted.selector);
         sbt.ownerOf(tid);
     }
 
-    function test_OwnerOf_ReturnsOwnerWhenMinted() public {
+    function test_OwnerOf_ReturnsOwnerWhenMinted() external {
         sbt.mint(alice);
         assertEq(sbt.ownerOf(sbt.tokenIdOf(alice)), alice);
     }
 
-    function test_OwnerOf_RevertAfterBurn() public {
+    function test_OwnerOf_RevertAfterBurn() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
@@ -270,19 +272,19 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── tokenIdOf ─────────────────────────────────────────────
 
-    function test_TokenIdOf_ReturnsDeterministicValue() public view {
+    function test_TokenIdOf_ReturnsDeterministicValue() external view {
         uint256 tid = sbt.tokenIdOf(alice);
         uint256 expected = uint256(uint160(alice)) ^ uint256(uint160(address(sbt)));
         assertEq(tid, expected);
     }
 
-    function test_TokenIdOf_ZeroAddress() public view {
+    function test_TokenIdOf_ZeroAddress() external view {
         uint256 tid = sbt.tokenIdOf(address(0));
         uint256 expected = 0 ^ uint256(uint160(address(sbt)));
         assertEq(tid, expected);
     }
 
-    function test_TokenIdOf_RoundTrip() public {
+    function test_TokenIdOf_RoundTrip() external {
         address owner = alice;
         uint256 tid = sbt.tokenIdOf(owner);
         assertEq(sbt.balanceOf(owner), 0);
@@ -291,11 +293,11 @@ contract AddressDerivedSBTTest is Test {
         assertEq(sbt.ownerOf(tid), owner);
     }
 
-    function test_TokenIdOf_ConsistentAcrossCalls() public view {
+    function test_TokenIdOf_ConsistentAcrossCalls() external view {
         assertEq(sbt.tokenIdOf(alice), sbt.tokenIdOf(alice));
     }
 
-    function test_TokenIdOf_ConsistentAfterReMint() public {
+    function test_TokenIdOf_ConsistentAfterReMint() external {
         uint256 tokenIdBefore = sbt.tokenIdOf(alice);
         uint256 tid = sbt.mint(alice);
         assertEq(tid, tokenIdBefore);
@@ -312,7 +314,7 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── Multiple Addresses ───────────────────────────────────
 
-    function test_MultipleAddresses() public {
+    function test_MultipleAddresses() external {
         sbt.mint(alice);
         sbt.mint(bob);
         assertEq(sbt.balanceOf(alice), 1);
@@ -322,7 +324,7 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── Cross-contract isolation ────────────────────────────────
 
-    function test_CrossContract_TokenIdIsolation() public {
+    function test_CrossContract_TokenIdIsolation() external {
         AddressDerivedSBT sbt2 = new AddressDerivedSBT(TOKEN_NAME, TOKEN_SYMBOL, BASE_URI);
 
         uint256 tid1 = sbt.tokenIdOf(alice);
@@ -335,7 +337,7 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── Fuzz ────────────────────────────────────────────────────
 
-    function testFuzz_TokenIdOf_RoundTrip(address owner) public {
+    function testFuzz_TokenIdOf_RoundTrip(address owner) external {
         uint256 tid = sbt.tokenIdOf(owner);
         sbt.mint(owner);
         assertEq(sbt.ownerOf(tid), owner);
@@ -344,11 +346,11 @@ contract AddressDerivedSBTTest is Test {
 
     // ─── Gas ────────────────────────────────────────────────────
 
-    function test_Gas_Mint() public {
+    function test_Gas_Mint() external {
         sbt.mint(alice);
     }
 
-    function test_Gas_Burn() public {
+    function test_Gas_Burn() external {
         uint256 tokenId = sbt.mint(alice);
 
         vm.prank(alice);
