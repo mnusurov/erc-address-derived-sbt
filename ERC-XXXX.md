@@ -1,5 +1,5 @@
 ---
-eip: XXXX
+erc: XXXX
 title: Address-Derived Non-Transferable Token
 description: A minimal soulbound token where tokenId is deterministically derived from the owner's address XOR'd with the contract address.
 author: Marat Nusurov (@mnusurov)
@@ -11,11 +11,11 @@ created: 2026-05-07
 requires: 165, 721
 ---
 
-# EIP-XXXX: Address-Derived Non-Transferable Token
+# ERC-XXXX: Address-Derived Non-Transferable Token
 
 ## Abstract
 
-This EIP proposes a minimal standard for non-transferable tokens (Soulbound tokens) where the `tokenId` is **deterministically derived** from the owner's address using XOR with the contract address: `tokenId = uint256(uint160(owner)) ^ uint256(uint160(address(this)))`. This design enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, and makes the semantics of the token extremely clear.
+This standard proposes a minimal standard for non-transferable tokens (Soulbound tokens) where the `tokenId` is **deterministically derived** from the owner's address using XOR with the contract address: `tokenId = uint256(uint160(owner)) ^ uint256(uint160(address(this)))`. This design enforces **one-token-per-address** at the protocol level, dramatically reduces storage costs, and makes the semantics of the token extremely clear.
 
 ## Motivation
 

@@ -2,12 +2,12 @@
 
 **Deterministic Address-Bound Soulbound Token Standard**
 
-> Ultra-minimal, gas-efficient, storage-optimized non-transferable token where `tokenId` is deterministically derived from the owner's address — see [EIP-XXXX.md](./EIP-XXXX.md) for the full specification.
+> Ultra-minimal, gas-efficient, storage-optimized non-transferable token where `tokenId` is deterministically derived from the owner's address — see [ERC-XXXX.md](./ERC-XXXX.md) for the full specification.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey)](LICENSE)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.35-363636?logo=solidity)](https://github.com/ethereum/solidity)
 [![Foundry](https://img.shields.io/badge/Built%20with-Foundry-000000?logo=ethereum)](https://book.getfoundry.sh/)
-[![EIP](https://img.shields.io/badge/EIP-Draft-blueviolet)](./EIP-XXXX.md)
+[![ERC](https://img.shields.io/badge/ERC-Draft-blueviolet)](./ERC-XXXX.md)
 
 ---
 
@@ -19,7 +19,7 @@ This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)**
 
 ## Key Features
 
-- **Deterministic Token ID** — derived from the owner's address (see [`tokenIdOf()`](./EIP-XXXX.md) in the specification)
+- **Deterministic Token ID** — derived from the owner's address (see [`tokenIdOf()`](./ERC-XXXX.md) in the specification)
 - **Strict one-per-address** enforced at the token ID level
 - **Minimal storage** — single `mapping(uint256 => bool)` for existence tracking
 - **No approvals, no transfers, no operators** — true non-transferable
@@ -41,4 +41,4 @@ This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)**
 
 ---
 
-→ **Full specification:** [EIP-XXXX.md](./EIP-XXXX.md)
+→ **Full specification:** [ERC-XXXX.md](./ERC-XXXX.md)
