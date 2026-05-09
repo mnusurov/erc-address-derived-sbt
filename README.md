@@ -26,12 +26,13 @@ This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)**
 
 | Operation | Gas Cost |
 |-----------|----------|
-| Mint      | 33,182   |
-| Burn      | 27,363   |
-| ownerOf   | revert (unminted) / 35,330 (minted) |
-| balanceOf | 9,939 (unminted) / 34,385 (minted) |
+| TokenIdOf | 7,417 |
+| Mint | 32,905 |
+| OwnerOf (minted) | 10,389 |
+| BalanceOf (minted) | 9,618 |
+| Burn | 8,006 |
 
-*Gas numbers from `forge snapshot`.*
+*Gas measured with vm.startSnapshotGas in test/Gas.t.sol.*
 
 ---
 

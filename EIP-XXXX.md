@@ -225,7 +225,7 @@ ERC-4973 also uses a derived token ID — the EIP-712 hash of a bilateral agreem
 | Transfer functions | Present but blocked | Absent | Absent | Absent |
 | ERC-165 | Yes | Yes | Yes | Yes |
 | ERC-5192 | Native / No | No | No | Interface-compatible |
-| Gas (mint/burn) | ~50k+ / ~45k+ | ~55k+ / ~50k+ | ~45k / ~40k | 33k / 27k |
+| Gas (mint/burn) | ~50k+ / ~45k+ | ~55k+ / ~50k+ | ~45k / ~40k | 33k / 8k |
 
 ## Backwards Compatibility
 
