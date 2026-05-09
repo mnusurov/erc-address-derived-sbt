@@ -3,7 +3,7 @@ erc: XXXX
 title: Address-Derived Non-Transferable Token
 description: A minimal soulbound token where tokenId is deterministically derived from the owner's address XOR'd with the contract address.
 author: Marat Nusurov (@mnusurov)
-discussions-to: https://ethereum-magicians.org/t/erc-xxxx-address-derived-non-transferable-token
+discussions-to: https://ethereum-magicians.org/t/erc-idea-address-derived-non-transferable-token-soulbound-token/28475
 status: Draft
 type: Standards Track
 category: ERC
