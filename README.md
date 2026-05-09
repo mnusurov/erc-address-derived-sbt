@@ -31,11 +31,11 @@ This proposal introduces a new Ethereum standard for **Soulbound Tokens (SBTs)**
 
 | Operation | Gas Cost |
 |-----------|----------|
-| TokenIdOf | 7,417 |
 | Mint | 32,905 |
-| OwnerOf (minted) | 10,389 |
-| BalanceOf (minted) | 9,618 |
 | Burn | 8,006 |
+| BalanceOf (minted) | 9,618 |
+| OwnerOf (minted) | 10,389 |
+| tokenIdOf | 7,417 |
 
 *Gas measured with vm.startSnapshotGas in test/Gas.t.sol.*
 
