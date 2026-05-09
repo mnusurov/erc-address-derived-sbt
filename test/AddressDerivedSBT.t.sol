@@ -4,7 +4,13 @@ pragma solidity 0.8.35;
 import {Test, Vm} from "forge-std/Test.sol";
 
 import {AddressDerivedSBT} from "../contracts/AddressDerivedSBT.sol";
-import {IERC165, IERC5192, IERC721Core, IERC721Metadata, IERCXXXX} from "../contracts/interfaces/IERCXXXX.sol";
+import {
+    IERC165,
+    IERC5192,
+    IERC721Core,
+    IERC721Metadata,
+    IERCXXXX
+} from "../contracts/interfaces/IERCXXXX.sol";
 
 contract AddressDerivedSBTTest is Test {
     AddressDerivedSBT internal sbt;
